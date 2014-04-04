@@ -3,16 +3,14 @@ require 'mina/rails'
 require 'mina/git'
 
 set :domain, '106.186.119.248'
-set :deploy_to, '/web/image-service'
+set :deploy_to, '/web/kv_service'
 set :current_path, 'current'
-set :repository, 'git://github.com/mindpin/image-service.git'
+set :repository, 'git://github.com/kaid/kv_service.git'
 set :branch, 'master'
 set :user, 'root'
 
 set :shared_paths, [
   'config/mongoid.yml',
-  'config/env.yml',
-  'config/output_settings.yml',
   'tmp'
 ]
 
@@ -32,11 +30,8 @@ task :setup => :environment do
   queue! %[mkdir -p "#{deploy_to}/shared/config"]
   queue! %[chmod g+rx,u+rwx "#{deploy_to}/shared/config"]
   queue! %[touch "#{deploy_to}/shared/config/mongoid.yml"]
-  queue! %[touch "#{deploy_to}/shared/config/env.yml"]
 
   queue  %[echo "-----> Be sure to edit 'shared/config/mongoid.yml'."]
-  queue  %[echo "-----> Be sure to edit 'shared/config/env.yml'."]
-  queue  %[echo "-----> Be sure to edit 'shared/config/output_settings.yml'."]
 end
 
 desc "Deploys the current version to the server."
@@ -50,8 +45,6 @@ task :deploy => :environment do
       queue! "RACK_ENV=production bundle exec rake assetpack:build"      
       queue %[
         source /etc/profile
-        ./deploy/sh/sidekiq.sh stop
-        ./deploy/sh/sidekiq.sh start
         ./deploy/sh/unicorn.sh stop
         ./deploy/sh/unicorn.sh start
       ]
@@ -78,8 +71,6 @@ task :restart => :environment do
   queue %[
     source /etc/profile
     cd #{deploy_to}/#{current_path}
-    ./deploy/sh/sidekiq.sh stop
-    ./deploy/sh/sidekiq.sh start
     ./deploy/sh/unicorn.sh stop
     ./deploy/sh/unicorn.sh start
   ]

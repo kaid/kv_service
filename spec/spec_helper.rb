@@ -9,7 +9,7 @@ require 'rack/test'
 
 module RSpecMixin
   include Rack::Test::Methods
-  def app; ImageServiceApp end
+  def app; KVService end
 end
 
 RSpec.configure do |config|
