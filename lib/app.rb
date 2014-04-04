@@ -58,12 +58,17 @@ class KVService < Sinatra::Base
     def kv_res(&block)
       store = UserStore.find_by(secret: params[:secret])
       return 401 if !store
-      res = block.call(store)
-      content_type :text
+      res = MultiJson.dump({
+        key:       params[:key],
+        value:     block.call(store),
+        user_id:   store.uid,
+        user_name: store.name,
+        scope:     params[:scope]
+      })
+      content_type :json
       return res if !params[:callback]
       content_type :js
-      args = MultiJson.dump(res)
-      "#{params[:callback]}(#{args})"
+      "#{params[:callback]}(#{res})"
     end
   end
 

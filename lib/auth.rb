@@ -32,7 +32,7 @@ class Auth
   def find_or_create_user_store!
     if @response.is_a?(Hash)
       @store = UserStore.find_or_create_by(email: @response["email"])
-      @store.update_attributes(name: @response["name"], avatar: @response["avatar"])
+      @store.update_attributes(name: @response["name"], avatar: @response["avatar"], uid: @response["id"])
       @store.save
     end
   end
