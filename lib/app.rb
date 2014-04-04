@@ -62,7 +62,8 @@ class KVService < Sinatra::Base
         key:       params[:key],
         value:     block.call(store),
         user_id:   store.uid,
-        user_name: store.name
+        user_name: store.name,
+        scope:     params[:scope]
       })
       content_type :json
       return res if !params[:callback]
