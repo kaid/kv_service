@@ -1,0 +1,36 @@
+.user {
+    position:fixed;
+    height:64px;
+    width:800px;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
+    margin:auto;
+    border:4px solid #ccc;
+    color:#888;
+    
+    img, h1, h2 {
+        font-size:32px;
+        font-family:sans-serif;
+        font-weight:normal;
+        float:left;
+        height:64px;
+        line-height:64px;
+        text-align:center;
+    }
+
+    img.avatar {
+        width:64px;
+    }
+    
+    h1.name {
+        width:120px;
+        border-left:1px solid #ccc;
+        border-right:1px solid #ccc;
+    }
+    
+    h2.secret {
+        width:610px;
+    }
+}

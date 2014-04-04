@@ -1,7 +1,7 @@
-require "./lib/randstr"
 require "bundler"
 Bundler.setup(:default)
 require "sinatra"
+require "sinatra/cookies"
 require "sinatra/reloader"
 require 'sinatra/assetpack'
 require "pry"
@@ -11,22 +11,24 @@ require 'sass'
 require 'coffee_script'
 require 'yui/compressor'
 require 'sinatra/json'
-require 'carrierwave'
+require "rest_client"
 require 'mongoid'
-require 'carrierwave/mongoid'
-require 'carrierwave-aliyun'
-require "carrierwave_backgrounder"
+require "multi_json"
 require File.expand_path("../../config/env",__FILE__)
 
-require "./lib/image"
+require "./lib/user_store"
+require "./lib/scope"
+require "./lib/key_value"
+require "./lib/auth"
 
-class ImageServiceApp < Sinatra::Base
+class KVService < Sinatra::Base
   configure :development do
     register Sinatra::Reloader
   end
 
   set :views, ["templates"]
   set :root, File.expand_path("../../", __FILE__)
+  set :cookie_options, :domain => nil
   register Sinatra::AssetPack
 
   assets {
@@ -46,41 +48,56 @@ class ImageServiceApp < Sinatra::Base
     js_compression  :uglify
   }
 
+  helpers Sinatra::Cookies
+
+  helpers do
+    def current_store
+      Auth.current_store(self)
+    end
+
+    def kv_res(&block)
+      store = UserStore.find_by(secret: params[:secret])
+      return 401 if !store
+      res = block.call(store)
+      content_type :text
+      return res if !params[:callback]
+      content_type :js
+      args = MultiJson.dump(res)
+      "#{params[:callback]}(#{args})"
+    end
+  end
+
+  before do
+    headers("Access-Control-Allow-Origin" => request.base_url)
+  end
+
   get "/" do
+    redirect to("/login") if !current_store
     haml :index
   end
 
-  get "/images" do
-    @images = Image.all.sort(created_at: -1)
-    haml :images
+  get "/login" do
+    haml :login
   end
 
-  post "/images" do
-    image = Image.from_params(params[:file])
-    "/images/#{image.token}"
+  post "/login" do
+    begin
+      Auth.new(params[:login], params[:password], self).login!
+      200
+    rescue
+      401
+    end
   end
 
-  get "/settings" do
-    haml :settings
+  post "/write" do
+    kv_res do |store|
+      store.scope(params[:scope]).set(params[:key], params[:value])
+    end
   end
 
-  post "/settings" do
-    OutputSetting.from(params[:option].to_a[0])
-    haml :settings_partial, layout: false
-  end
-
-  delete "/settings" do
-    OutputSetting.del(params[:option].to_a[0])
-    "deleted"
-  end
-
-  get "/images/:id" do
-    @image = Image.find_by(token: params[:id])
-    haml :image
-  end
-
-  get "/display" do
-    @url = params[:url]
-    haml :display
+  get "/read" do
+    kv_res do |store|
+      store.scope(params[:scope]).get(params[:key])
+    end
   end
 end
