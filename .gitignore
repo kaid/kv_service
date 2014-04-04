@@ -2,3 +2,5 @@
 \#*
 .sass-cache
 .bundle
+config/mongoid.yml
+.\#*
