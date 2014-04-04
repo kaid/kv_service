@@ -73,7 +73,7 @@ class KVService < Sinatra::Base
   end
 
   before do
-    headers("Access-Control-Allow-Origin" => request.base_url)
+    headers("Access-Control-Allow-Origin" => "*")
   end
 
   get "/" do
